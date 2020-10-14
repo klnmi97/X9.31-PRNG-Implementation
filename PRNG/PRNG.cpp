@@ -27,11 +27,11 @@ and fitness for purpose.
 
 #define BLOCK_SIZE 16
 
-static unsigned char* I;
-static unsigned char* R;
-static unsigned char* V;
-static unsigned char* DT;
-static unsigned char* K;
+static unsigned char *I;
+static unsigned char *R;
+static unsigned char *DT;
+static unsigned char V[BLOCK_SIZE];
+static unsigned char K[BLOCK_SIZE];
 
 /**
  * @brief Converts char numbers to hex numbers with the same value
@@ -79,12 +79,12 @@ void increment_DT() {
  * @param key 128-bit value for key
  */
 void init_prng(unsigned char* seed, unsigned char* key) {
-    V = seed;
-    K = key;
-    DT = new unsigned char[16];
+    memcpy(V, seed, BLOCK_SIZE);
+    memcpy(K, key, BLOCK_SIZE);
+    DT = (unsigned char*) malloc(16 * sizeof(unsigned char));
     memset(DT, 0, 16);
-    I = new unsigned char[16];
-    R = new unsigned char[16];
+    I = (unsigned char*) malloc(16 * sizeof(unsigned char));
+    R = (unsigned char*) malloc(16 * sizeof(unsigned char));
 }
 
 /**
@@ -93,19 +93,20 @@ void init_prng(unsigned char* seed, unsigned char* key) {
  */
 unsigned char* x931_rand() {
 
+    unsigned char IXV[16], RXI[16];
+
+
     aes_encrypt_ctx ctx[1];
     aes_encrypt_key128(K, ctx);
 
     // I = E_K(DT)
     aes_ecb_encrypt(DT, I, 16, ctx);
     // R = E_K(I xor V)
-    unsigned char* I_xor_V = new unsigned char[16];
-    xor_char(I, V, I_xor_V, 16);
-    aes_ecb_encrypt(I_xor_V, R, 16, ctx);
+    xor_char(I, V, IXV, 16);
+    aes_ecb_encrypt(IXV, R, 16, ctx);
     // V = E_K(R xor I)
-    unsigned char* R_x_I = new unsigned char[16];
-    xor_char(R, I, R_x_I, 16);
-    aes_ecb_encrypt(R_x_I, V, 16, ctx);
+    xor_char(R, I, RXI, 16);
+    aes_ecb_encrypt(RXI, V, 16, ctx);
     // update DT for the next iteration
     increment_DT();
 
