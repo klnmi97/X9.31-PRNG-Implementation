@@ -88,7 +88,8 @@ void init_prng(unsigned char* seed, unsigned char* key) {
 }
 
 /**
- * @brief generate 128 bits of pseudo random data
+ * @brief generate 128 bits of pseudo random data. {@link #init_prng(unsigned char*, unsigned char*)}
+ * function should be called before.
  * @return 128 bits of random data contained in the array
  */
 unsigned char* x931_rand() {
