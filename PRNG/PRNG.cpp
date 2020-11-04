@@ -16,7 +16,7 @@ in respect of its operation, including, but not limited to, correctness
 and fitness for purpose.
 ---------------------------------------------------------------------------
 
- This is an implementation of X9.31 Pseudorandom number generator (PRNG)
+ This is an implementation of ANSI X9.31 Pseudorandom number generator (PRNG)
  which is based on the AES implementation by Brian Gladman.
  The mentioned AES project can be found here: https://github.com/BrianGladman/aes.
 */
@@ -38,7 +38,8 @@ static unsigned char K[BLOCK_SIZE];
  * @param value pointer to array of char numbers to be changed
  */
 void char_to_hex(unsigned char* value) {
-    for (int i = 0; i < strlen((char*)value); i++) {
+    auto len = strlen((char*)value);
+    for (int i = 0; i < len; i++) {
         value[i] = value[i] - '0';
     }
 }
@@ -88,14 +89,13 @@ void init_prng(unsigned char* seed, unsigned char* key) {
 }
 
 /**
- * @brief generate 128 bits of pseudo random data. {@link #init_prng(unsigned char*, unsigned char*)}
- * function should be called before.
+ * @brief generate 128 bits of pseudo random data according to the ANSI X9.31 standard. 
+ * {@link #init_prng(unsigned char*, unsigned char*)} function should be called before.
  * @return 128 bits of random data contained in the array
  */
 unsigned char* x931_rand() {
 
     unsigned char IXV[16], RXI[16];
-
 
     aes_encrypt_ctx ctx[1];
     aes_encrypt_key128(K, ctx);
@@ -116,11 +116,16 @@ unsigned char* x931_rand() {
 
 int main()
 {
+    /*char seed[17] = "2328862328862328";
+    char key[17] = "8232688232688232";*/
 
-    // TODO: provide custom seed+key
-    char seed[17] = "2328862328862328";
-    char key[17] = "8232688232688232";
+    // Size of output file in bits
+    double bits_to_generate = pow(10, 9);
 
+    // Here you can change seed and key values for PRNG
+   char seed[17] = "5040185040185040";
+   char key[17] = "0405810405810405";
+   
     char_to_hex((unsigned char*)seed);
     char_to_hex((unsigned char*)key);
 
@@ -129,11 +134,26 @@ int main()
     FILE* file_ptr;
     file_ptr = fopen("F.bin", "wb");
 
-    int file_size = (int)pow(10, 9) / (BLOCK_SIZE * 8);
+    int file_size = (int)bits_to_generate / (BLOCK_SIZE * 8);
 
     for (int i = 0; i < file_size; i++) {
         auto res = x931_rand();
-        fwrite(res, sizeof(res[0]), BLOCK_SIZE, file_ptr);
+        fwrite(res, 1, BLOCK_SIZE, file_ptr);
     }
     fclose(file_ptr);
+
+    // Uncomment lines below to generate 10^9 bits of data
+    // provided by standard rand() function.
+    /*FILE* file2_ptr;
+    file2_ptr = fopen("F2.bin", "wb");
+
+    int cycles_count = (int)pow(10, 9) / (2 * 8);
+
+    srand(504018);
+
+    for (int j = 0; j < cycles_count; j++) {
+        unsigned int result = rand();
+        fwrite((const void *)&result, 2, 1, file2_ptr);
+    }
+    fclose(file2_ptr);*/
 }
